@@ -24,7 +24,9 @@ jobs:
           cache: true
 
       - name: Get dependencies
-        run: flutter pub get --verbose
+        run: |
+          flutter pub get
+          echo "Dependencies resolved successfully"
 
       - name: Verify formatting
         run: dart format --set-exit-if-changed .
