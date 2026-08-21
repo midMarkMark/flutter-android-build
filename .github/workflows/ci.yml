@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze-test-build:
+    name: Analyze, Test & Build APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build release APKs (split per ABI)
+        run: flutter build apk --split-per-abi --release
+
+      - name: Rename APK artifacts
+        run: |
+          cd build/app/outputs/flutter-apk
+          for f in *.apk; do
+            if [[ "$f" == *"arm64-v8a"* ]]; then
+              mv "$f" "ai-dungeon-detective-arm64-v8a.apk"
+            elif [[ "$f" == *"armeabi-v7a"* ]]; then
+              mv "$f" "ai-dungeon-detective-armeabi-v7a.apk"
+            elif [[ "$f" == *"x86_64"* ]]; then
+              mv "$f" "ai-dungeon-detective-x86_64.apk"
+            fi
+          done
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: build/app/outputs/flutter-apk/ai-dungeon-detective-*.apk
+          retention-days: 30
