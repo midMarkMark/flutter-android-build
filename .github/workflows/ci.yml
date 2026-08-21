@@ -33,7 +33,10 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Get dependencies
-        run: flutter pub get
+        run: |
+          for i in 1 2 3; do
+            flutter pub get && break || sleep 10
+          done
 
       - name: Verify formatting
         run: dart format --set-exit-if-changed .
